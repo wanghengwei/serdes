@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run .
+
 type Foo struct {
 	A int
 	B []string

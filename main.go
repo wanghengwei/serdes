@@ -3,22 +3,43 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 )
+
+func NewSerializer() *Serializer {
+	return &Serializer{
+		buf: bytes.NewBuffer(nil),
+	}
+}
 
 type Serializer struct {
 	buf *bytes.Buffer
 }
 
+func (w *Serializer) Dump() string {
+	return hex.Dump(w.buf.Bytes())
+}
+
 func (w *Serializer) Serializeint(v *int) error {
+	return binary.Write(w.buf, binary.LittleEndian, int32(*v))
+}
+
+func (w *Serializer) Serializestring(v *string) error {
+	return binary.Write(w.buf, binary.LittleEndian, []byte(*v))
+}
+
+func (w *Serializer) Serializebool(v *bool) error {
 	return binary.Write(w.buf, binary.LittleEndian, v)
 }
 
 func main() {
-	err := processFile("./foo.go")
+	srcFile := os.Getenv("GOFILE")
+	err := processFile(srcFile)
 	if err != nil {
 		panic(err)
 	}
@@ -30,6 +51,8 @@ func processFile(p string) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("package main")
 
 	for _, o := range f.Scope.Objects {
 		// fmt.Printf("%#v\n", d)
